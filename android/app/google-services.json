@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "770878707161",
+    "project_id": "money-tracker-1c5e4",
+    "storage_bucket": "money-tracker-1c5e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770878707161:android:f541c7a83e7c38b290b5c8",
+        "android_client_info": {
+          "package_name": "com.example.money_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "770878707161-u54ssa9puiiuinboi9bdbk67b1clumiq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.money_tracker",
+            "certificate_hash": "8c116b8431cf0d8a942939dca511be071c773187"
+          }
+        },
+        {
+          "client_id": "770878707161-rc6gs6g18v6np101i38ocqdf6m97ghgd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQZNKyfNo2Ht-fWwohR1CUjaad2Xm1Flc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "770878707161-rc6gs6g18v6np101i38ocqdf6m97ghgd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
