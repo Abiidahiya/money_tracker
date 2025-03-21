@@ -90,11 +90,44 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
                 'Outstanding: ₹${recipient.outstandingBalance.toStringAsFixed(2)}',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
-              trailing: Icon(Icons.drag_handle, color: Colors.grey),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.blueAccent, size: 30,),
+                    onPressed: () => _showDeleteConfirmationDialog(context, recipient.id),
+                  ),
+                ],
+              ),
             ),
           );
         },
       ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, String recipientId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Delete Recipient?'),
+          content: Text('Are you sure you want to delete this recipient? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('No', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                _deleteRecipient(context, recipientId);
+              },
+              child: Text('Yes', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
