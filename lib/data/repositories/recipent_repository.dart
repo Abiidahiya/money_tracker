@@ -1,31 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/recipent_model.dart';
 
 class RecipientRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get a reference to a specific recipient document
-  DocumentReference getRecipientRef(String recipientId) {
-    return _firestore.collection('recipients').doc(recipientId);
+  // Get reference to the recipients collection under the authenticated user
+  CollectionReference get _recipientsCollection {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) {
+      throw Exception("User not authenticated");
+    }
+    return _firestore.collection('users').doc(userId).collection('recipients');
   }
 
-  // Fetch all recipients as a stream, ordered by the 'order' field
+  // Get a specific recipient reference
+  DocumentReference getRecipientRef(String recipientId) {
+    return _recipientsCollection.doc(recipientId);
+  }
+
+  // Fetch recipients as a stream
   Stream<List<Recipient>> getRecipients() {
-    return _firestore
-        .collection('recipients')
-        .orderBy('order') // Ensures recipients load in correct order
+    return _recipientsCollection
+        .orderBy('order')
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
-        return Recipient.fromMap(doc.data(), doc.id);
+        return Recipient.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }).toList();
     });
   }
 
-  // Update the order of all recipients
+  // Update all recipient orders
   Future<void> updateRecipientOrders() async {
-    final querySnapshot = await _firestore.collection('recipients').get();
+    final querySnapshot = await _recipientsCollection.get();
 
     for (var i = 0; i < querySnapshot.docs.length; i++) {
       final doc = querySnapshot.docs[i];
@@ -33,27 +43,24 @@ class RecipientRepository {
     }
   }
 
-  // Update the order of a specific recipient
+  // Update a specific recipient's order
   Future<void> updateRecipientOrder(String id, int order) async {
-    print('Updating recipient $id with order $order');
-    await _firestore.collection('recipients').doc(id).update({
-      'order': order,
-    });
+    await _recipientsCollection.doc(id).update({'order': order});
   }
 
-  // Add a new recipient with an automatically assigned order
+  // Add a new recipient
   Future<void> addRecipient(Recipient recipient) async {
-    // Get the current number of recipients to assign the next order
-    final querySnapshot = await _firestore.collection('recipients').get();
+    final querySnapshot = await _recipientsCollection.get();
     final nextOrder = querySnapshot.size;
 
-    // Add the recipient with the assigned order
-    await _firestore.collection('recipients').add({
+    await _recipientsCollection.add({
       ...recipient.toMap(),
-      'order': nextOrder, // Assign the next order
+      'order': nextOrder,
     });
   }
+
+  // Delete a recipient
   Future<void> deleteRecipient(String recipientId) async {
-    await _firestore.collection('recipients').doc(recipientId).delete();
+    await _recipientsCollection.doc(recipientId).delete();
   }
 }

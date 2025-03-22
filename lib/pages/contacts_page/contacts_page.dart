@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,10 +13,18 @@ class ContactsPage extends StatelessWidget {
 
   Future<void> _onContactTap(BuildContext context, String contactName) async {
     final firestore = FirebaseFirestore.instance;
-    final recipientsCollection = firestore.collection('recipients');
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      print("No authenticated user found!");
+      return;
+    }
+
+    final userId = user.uid;
+    final recipientsCollection = firestore.collection('users').doc(userId).collection('recipients');
 
     try {
-      // Check if the contact already exists
+      // Check if the contact already exists in this user's recipients
       final querySnapshot = await recipientsCollection
           .where('name', isEqualTo: contactName)
           .limit(1)
@@ -27,22 +36,23 @@ class ContactsPage extends StatelessWidget {
         // Contact already exists, get the existing recipientId
         recipientId = querySnapshot.docs.first.id;
       } else {
-        // Contact does not exist, create a new one with outstanding_balance = 0
-        final countQuery = await recipientsCollection.orderBy('order').get();
+        // Contact does not exist, create a new one
+        final countQuery = await recipientsCollection.get();
         final nextOrder = countQuery.size; // Assign the next order
 
         final newRecipientRef = await recipientsCollection.add({
           'name': contactName,
-          'outstanding_balance': 0.0, // Set initial outstanding balance to 0
-          'order' : nextOrder,
+          'outstanding_balance': 0.0, // Initial balance set to 0
+          'order': nextOrder,
         });
+
         recipientId = newRecipientRef.id;
       }
 
-      // Navigate to recipient profile page with recipientId
-      Navigator.pushNamed(
+      // Navigate to RecipientProfilePage with the recipientId
+      Navigator.popAndPushNamed(
         context,
-        '/page4', // Ensure this route leads to RecipientProfilePage
+        '/page1', // Ensure this route leads to RecipientProfilePage
         arguments: recipientId,
       );
     } catch (e) {
@@ -63,7 +73,7 @@ class ContactsPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              context.read<ContactBloc>().add(RefreshContactsEvent()); // Refresh contacts
+              context.read<ContactBloc>().add(RefreshContactsEvent());
             },
           ),
         ],
@@ -86,11 +96,11 @@ class ContactsPage extends StatelessWidget {
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100], // Subtle background
+                    color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1), // Light shadow effect
+                        color: Colors.grey.withOpacity(0.1),
                         spreadRadius: 2,
                         blurRadius: 5,
                         offset: const Offset(0, 3),
@@ -99,7 +109,7 @@ class ContactsPage extends StatelessWidget {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Colors.blueGrey[300], // Subtle pastel color
+                      backgroundColor: Colors.blueGrey[300],
                       child: Text(
                         contactName.isNotEmpty ? contactName[0].toUpperCase() : '?',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),

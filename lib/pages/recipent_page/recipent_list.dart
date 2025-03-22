@@ -6,6 +6,7 @@ import '../../bloc/recipents/recipent_event.dart';
 import '../../bloc/recipents/recipent_state.dart';
 import '../../data/models/recipent_model.dart';
 import '../../data/repositories/recipent_repository.dart';
+import '../ledger_page/ledger_page.dart';
 
 class RecipientList extends StatefulWidget {
   @override
@@ -13,12 +14,13 @@ class RecipientList extends StatefulWidget {
 }
 
 class _RecipientListState extends State<RecipientList> with TickerProviderStateMixin {
-  late List<Recipient> localRecipients; // Local list for smooth transitions
+  late List<Recipient> localRecipients;
+  String? deletingRecipientId; // Track deleting state
 
   @override
   void initState() {
     super.initState();
-    localRecipients = []; // Initialize empty list
+    localRecipients = [];
   }
 
   @override
@@ -27,7 +29,7 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
       listener: (context, state) {
         if (state is RecipientLoaded) {
           setState(() {
-            localRecipients = List.from(state.recipients); // Only update when necessary
+            localRecipients = List.from(state.recipients);
           });
         }
       },
@@ -38,10 +40,8 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
 
           final movedItem = localRecipients.removeAt(oldIndex);
           localRecipients.insert(newIndex, movedItem);
+          setState(() {});
 
-          setState(() {}); // Update UI instantly for smooth effect
-
-          // Dispatch event to update Firestore order
           context.read<RecipientBloc>().add(ReorderRecipients(
             oldIndex: oldIndex,
             newIndex: newIndex,
@@ -65,8 +65,8 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
           final recipient = localRecipients[index];
 
           return AnimatedContainer(
-            key: ValueKey(recipient.id), // Unique key
-            duration: Duration(milliseconds: 300), // Smooth transition
+            key: ValueKey(recipient.id),
+            duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             margin: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
             decoration: BoxDecoration(
@@ -84,21 +84,30 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
               leading: Icon(Icons.person, color: Colors.blue),
               title: Text(
                 recipient.name,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               subtitle: Text(
                 'Outstanding: ₹${recipient.outstandingBalance.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: Colors.blue[800]),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, color: Colors.blueAccent, size: 30,),
-                    onPressed: () => _showDeleteConfirmationDialog(context, recipient.id),
+              trailing: deletingRecipientId == recipient.id
+                  ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+                  : IconButton(
+                icon: Icon(Icons.delete_outline, color: Colors.blueAccent, size: 30),
+                onPressed: () => _showDeleteConfirmationDialog(context, recipient.id),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LedgerPage(recipient: recipient),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           );
         },
@@ -120,7 +129,7 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop();
                 _deleteRecipient(context, recipientId);
               },
               child: Text('Yes', style: TextStyle(color: Colors.red)),
@@ -130,27 +139,26 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
       },
     );
   }
-}
-  // Method to delete a recipient
+
   Future<void> _deleteRecipient(BuildContext context, String recipientId) async {
-    print('_deleteRecipient called with recipientId: $recipientId'); // Debug log
-    final recipientRepository = context.read<RecipientRepository>();
+    setState(() {
+      deletingRecipientId = recipientId;
+    });
 
     try {
-      print('Attempting to delete recipient...'); // Debug log
-      await recipientRepository.deleteRecipient(recipientId); // Delete from Firestore
-      print('Recipient deleted successfully'); // Debug log
+      context.read<RecipientBloc>().add(DeleteRecipient(recipientId));
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Recipient deleted successfully')),
       );
-
-      // Refresh the list of recipients
-      context.read<RecipientBloc>().add(FetchRecipients());
     } catch (e) {
-      print('Error deleting recipient: $e'); // Debug log
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to delete recipient: $e')),
       );
     }
+
+    setState(() {
+      deletingRecipientId = null;
+    });
   }
+}
