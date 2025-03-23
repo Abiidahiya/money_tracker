@@ -6,6 +6,9 @@ import 'package:money_tracker/pages/settings_page/settings_page_bloc.dart';
 import 'package:money_tracker/pages/settings_page/settings_page_event.dart';
 import 'package:money_tracker/pages/settings_page/settings_page_state.dart';
 
+import '../../bloc/theme/theme_bloc.dart';
+import '../../bloc/theme/theme_event.dart';
+import '../../bloc/theme/theme_state.dart';
 import '../../uicomponents/buttons/logout_button/logout_button.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -29,6 +32,17 @@ class SettingsPage extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.all(20),
                   children: [
+                    BlocBuilder<ThemeBloc, ThemeState>(
+                      builder: (context, themeState) {
+                        return SwitchListTile(
+                          title: Text('Dark Mode'),
+                          value: themeState.isDarkMode,
+                          onChanged: (value) {
+                            context.read<ThemeBloc>().add(ToggleThemeEvent());
+                          },
+                        );
+                      },
+                    ),
                     // Toggle for Container 1
                     SwitchListTile(
                       title: Text('Show Container 1'),

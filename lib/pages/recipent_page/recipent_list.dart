@@ -15,7 +15,7 @@ class RecipientList extends StatefulWidget {
 
 class _RecipientListState extends State<RecipientList> with TickerProviderStateMixin {
   late List<Recipient> localRecipients;
-  String? deletingRecipientId; // Track deleting state
+  String? deletingRecipientId;
 
   @override
   void initState() {
@@ -34,10 +34,10 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
         }
       },
       child: ReorderableListView.builder(
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         itemCount: localRecipients.length,
         onReorder: (oldIndex, newIndex) {
           if (newIndex > oldIndex) newIndex--;
-
           final movedItem = localRecipients.removeAt(oldIndex);
           localRecipients.insert(newIndex, movedItem);
           setState(() {});
@@ -47,20 +47,6 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
             newIndex: newIndex,
           ));
         },
-        proxyDecorator: (child, index, animation) {
-          return AnimatedOpacity(
-            opacity: 0.85,
-            duration: Duration(milliseconds: 200),
-            child: Transform.scale(
-              scale: 1.05,
-              child: Material(
-                elevation: 6,
-                color: Colors.transparent,
-                child: child,
-              ),
-            ),
-          );
-        },
         itemBuilder: (context, index) {
           final recipient = localRecipients[index];
 
@@ -68,27 +54,31 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
             key: ValueKey(recipient.id),
             duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            margin: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+            margin: EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+                color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black12,
-                  blurRadius: 4,
-                  spreadRadius: 1,
+                  blurRadius: 6,
+                  spreadRadius: 2,
                 ),
               ],
             ),
             child: ListTile(
-              leading: Icon(Icons.person, color: Colors.blue),
+              contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              leading: CircleAvatar(
+                backgroundColor: Colors.blueAccent,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
               title: Text(
                 recipient.name,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               subtitle: Text(
                 'Outstanding: ₹${recipient.outstandingBalance.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 14, color: Colors.blue[800]),
+                style: TextStyle(fontSize: 14, color: Colors.blueGrey[600]),
               ),
               trailing: deletingRecipientId == recipient.id
                   ? SizedBox(
@@ -97,7 +87,7 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
                   : IconButton(
-                icon: Icon(Icons.delete_outline, color: Colors.blueAccent, size: 30),
+                icon: Icon(Icons.delete_outline, color: Colors.redAccent, size: 28),
                 onPressed: () => _showDeleteConfirmationDialog(context, recipient.id),
               ),
               onTap: () {
@@ -120,19 +110,23 @@ class _RecipientListState extends State<RecipientList> with TickerProviderStateM
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Delete Recipient?'),
-          content: Text('Are you sure you want to delete this recipient? This action cannot be undone.'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            'Delete Recipient?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text('Are you sure you want to delete this recipient?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('No', style: TextStyle(color: Colors.grey)),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _deleteRecipient(context, recipientId);
               },
-              child: Text('Yes', style: TextStyle(color: Colors.red)),
+              child: Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
             ),
           ],
         );

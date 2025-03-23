@@ -62,6 +62,7 @@ class ContactsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.read<ContactBloc>().add(LoadContactsEvent());
     return Scaffold(
       appBar: AppBar(
         title: const Text("Contacts", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -96,7 +97,7 @@ class ContactsPage extends StatelessWidget {
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: Theme.of(context).cardColor, // Use theme card color
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -117,7 +118,11 @@ class ContactsPage extends StatelessWidget {
                     ),
                     title: Text(
                       contactName,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodyLarge?.color, // Use theme text color
+                      ),
                     ),
                   ),
                 ),
