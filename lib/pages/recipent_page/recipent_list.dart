@@ -6,7 +6,7 @@ import '../../bloc/recipents/recipent_event.dart';
 import '../../bloc/recipents/recipent_state.dart';
 import '../../data/models/recipent_model.dart';
 import '../../data/repositories/recipent_repository.dart';
-import '../ledger_page/ledger_page.dart';
+import '../ledger_page/ledger1_page.dart';
 
 class RecipientList extends StatefulWidget {
   @override
